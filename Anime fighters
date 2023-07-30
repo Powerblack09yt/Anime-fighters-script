@@ -1,4 +1,4 @@
---dupe free (passive)
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
 
 getgenv().type = "Dataloss" --Change to "Undo" if you want to Undo the dataloss
 
