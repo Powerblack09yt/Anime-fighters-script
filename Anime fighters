@@ -1,70 +1,28 @@
-local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local X = Material.Load({
-	Title = "AFS - caveirahub.",
-	Style = 3,
-	SizeX = 500,
-	SizeY = 350,
-	Theme = "Dark",
-	ColorOverrides = {
-		MainFrame = Color3.fromRGB(35,35,35)
-	}
+
+local Window = Rayfield:CreateWindow({
+   Name = "caveira hub",
+   LoadingTitle = "Caveira Interface Suíte",
+   LoadingSubtitle = "by Sirius",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Caveira hub"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+   KeySystem = false, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Untitled",
+      Subtitle = "Key System",
+      Note = "No method of obtaining the key is provided",
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
 })
-
-local Y = X.New({
-	Title = "Main"
-})
-
-local A = Y.Button({
-	Text = "Selected no Type",
-	Callback = function()
-		if Type == "Start Dataloss" then
-for i,v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.MainGui.Pets.Main.Scroll:GetDescendants()) do
-if v.Name == "UID" then
-local args = {
-    [1] = {
-        [string.rep("B", 4200000)] = v.Value
-    },
-    [2] = "AFS_Is_Dogshit",
-    [3] = 3
-}
-
-game:GetService("ReplicatedStorage").Remote.SaveTeam:FireServer(unpack(args))
-break
-end
-end
-TextField:SetText("Started")
-		elseif Type == "Undo Dataloss" then
-for i = 1,100 do
-local args = {
-    [1] = i
-}
-
-game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
-end
-TextField:SetText("Undone")
-		end
-	end
-})
-
-local D = Y.Dropdown({
-	Text = "Type",
-	Callback = function(Value)
-		getgenv().Type = Value
-	end,
-	Options = {
-		"Start Dataloss",
-		"Undo Dataloss"
-	}
-})
-
-getgenv().TextField = Y.TextField({
-  Text = "Status",
-  Type = "Default"
-})
-
-while task.wait() do
-if Type then
-A:SetText(Type)
-end
-end
