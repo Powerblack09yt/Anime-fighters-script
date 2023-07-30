@@ -1,10 +1,10 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 
-local Window = Rayfield:CreateWindow({
-   Name = "caveira hub",
-   LoadingTitle = "Caveira Interface Suíte",
-   LoadingSubtitle = "by Sirius",
+local MainWindow = Rayfield:CreateWindow({
+   Name = "Main",
+   LoadingTitle = "loading...",
+   LoadingSubtitle = "by Caveira",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = nil, -- Create a custom folder for your hub/game
