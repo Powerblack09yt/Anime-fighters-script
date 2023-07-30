@@ -1,46 +1,28 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "Caveira Hub", HidePremium = false, IntroText = "Caveirahub", SaveConfig = true, ConfigFolder = "Caveira Hub"})
 
-
-local MainWindow = Rayfield:CreateWindow({
-   Name = "Main",
-   LoadingTitle = "loading...",
-   LoadingSubtitle = "by Caveira",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
-      FileName = "Caveira hub"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-   },
-   KeySystem = false, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "Caveira Hub",
-      Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided",
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-   }
+OrionLib:MakeNotification({
+	Name = "hey!",
+	Content = "dont forget to subs!",
+	Image = "rbxassetid://4483345998",
+	Time = 5
 })
 
 
-local MainTab = MainWindow:CreateTab("Trade dupe", 4483362458) -- Title, Image
-
-}
-})
- 
-local Y = X.New({
-	Title = "Main"
+local MainTab = Window:MakeTab({
+	Name = "dupe trade",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
 })
 
-local A = Y.Button({
-	Text = "Selected no Type",
+local Section = MainTab:AddSection({
+	Name = "Dupe Section"
+})
+
+Tab:AddButton({
+	Name = "dupe start",
 	Callback = function()
-		if Type == "Start Dataloss" then
+      		if Type == "Start Dataloss" then
 for i,v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.MainGui.Pets.Main.Scroll:GetDescendants()) do
 if v.Name == "UID" then
 local args = {
@@ -66,41 +48,9 @@ game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
 end
 TextField:SetText("Undone")
 		end
-	end
+  	end    
 })
 
-local D = Y.Dropdown({
-	Text = "Type",
-	Callback = function(Value)
-		getgenv().Type = Value
-	end,
-	Options = {
-		"Start Dataloss",
-		"Undo Dataloss"
-	}
-})
 
-local AE = Y.Button({
-	Text = "https://discord.gg/EvTCW7CXSK",
-	Callback = function()
-		print("https://discord.gg/EvTCW7CXSK")
-	end
-})
-
-local AE2 = Y.Button({
-	Text = "Copy Discord Invite",
-	Callback = function()
-		setclipboard("https://discord.gg/EvTCW7CXSK")
-	end
-})
-
-getgenv().TextField = Y.TextField({
-  Text = "Status",
-  Type = "Default"
-})
-
-while task.wait() do
-if Type then
-A:SetText(Type)
 end
-end
+OrionLib:Init()
