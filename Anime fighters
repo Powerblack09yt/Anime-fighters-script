@@ -50,9 +50,9 @@ local args = {
 game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
 end
 TextField:SetText("Undone")
-		end
-	end
+end    
 })
+	
 
 
 OrionLib:Init()
