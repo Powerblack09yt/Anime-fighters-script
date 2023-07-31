@@ -37,16 +37,6 @@ game:GetService("ReplicatedStorage").Remote.SaveTeam:FireServer(unpack(args))
 break
 end
 end
-TextField:SetText("Started")
-		elseif Type == "Undo Dataloss" then
-for i = 1,100 do
-local args = {
-    [1] = i
-}
-
-game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
-end
-TextField:SetText("Undone")
 		end
   	end    
 })
