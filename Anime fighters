@@ -22,7 +22,12 @@ local Section = MainTab:AddSection({
 MainTab:AddButton({
 	Name = "dupe start",
 	Callback = function()
-      		if Type == "Start Dataloss" then
+      		function(Value)
+		getgenv().Type = Value
+	end,
+	Options = {
+		"Start Dataloss",
+if Type == "Start Dataloss" then
 for i,v in pairs(game:GetService("Players").LocalPlayer.PlayerGui.MainGui.Pets.Main.Scroll:GetDescendants()) do
 if v.Name == "UID" then
 local args = {
