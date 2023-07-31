@@ -42,7 +42,7 @@ end
 MainTab:AddButton({
     Name = "undo",
     Callback = function()
-               for i = 1,100 do
+              for i = 1,100 do
 local args = {
     [1] = i
 }
@@ -53,5 +53,6 @@ TextField:SetText("Undone")
 		end
 	end
 })
+
 
 OrionLib:Init()
