@@ -51,7 +51,6 @@ MainTab:AddButton({
             end
         end
     end
-end    
 })
 	
 
