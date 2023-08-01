@@ -49,8 +49,12 @@ MainTab:AddButton({
                     }
 
                     game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
-end    
+break
+end
+end
+      end    
 })
+        
 	
 
 
