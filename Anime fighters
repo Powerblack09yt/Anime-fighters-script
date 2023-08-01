@@ -45,7 +45,6 @@ MainTab:AddButton({
 
                     game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
                     TextField:SetText("Undone")
-                    break
 end    
 })
 	
