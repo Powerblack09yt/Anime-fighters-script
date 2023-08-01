@@ -37,21 +37,10 @@ MainTab:AddButton({
 
 
 MainTab:AddButton({
-    Name = "undo",
+    Name = "dupe undo",
     Callback = function()
-              for i,v in pairs(game.Players.LocalPlayer.PlayerGui.MainGui.Pets.TeamsList.Main.Scroll:GetDescendants()) do
-                if v.Name == "TeamName" and v.Text == "AFS_Is_Dogshit" then
-                    local args = {
-                        [1] = v.Parent.LayoutOrder
-                    }
-
-                    game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
-                    TextField:SetText("Undone")
-                    break
-                end
-            end
-        end
-    end
+              
+      end    
 })
         
 	
