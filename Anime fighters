@@ -32,7 +32,8 @@ MainTab:AddButton({
 
                     game:GetService("ReplicatedStorage").Remote.SaveTeam:FireServer(unpack(args))
             TextField:SetText("Started")
-      end    
+      
+end    
 })
 
 
