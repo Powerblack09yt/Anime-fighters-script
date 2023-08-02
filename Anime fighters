@@ -36,19 +36,6 @@ MainTab:AddButton({
 end    
 })
 
-MainTab:AddButton({
-    Name = "undo",
-    Callback = function()
-              for i = 1,100 do
-local args = {
-    [1] = i
-}
-
-game:GetService("ReplicatedStorage").Remote.DeleteTeam:FireServer(unpack(args))
-end
-TextField:SetText("Undone")
-end    
-})
 
 
 	
