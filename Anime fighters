@@ -1,4 +1,4 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+delocal OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({Name = "Caveira Hub", HidePremium = false, IntroText = "Caveirahub", SaveConfig = true, ConfigFolder = "Caveira Hub"})
 
 OrionLib:MakeNotification({
@@ -49,4 +49,6 @@ end
 TextField:SetText("Undone")
 end    
 })
-	
+
+
+OrionLib:Init()
