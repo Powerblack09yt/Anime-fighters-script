@@ -8,33 +8,24 @@ OrionLib:MakeNotification({
     Time = 5
 })
 
+local ANIME_FIGHTERS_PLACE_ID = 6299805723
+if game.PlaceId ~= ANIME_FIGHTERS_PLACE_ID then return end
 
-local MainTab = Window:MakeTab({
-    Name = "dupe trade",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
+_G.disabled = false
+_G.themes = _G.themes or { -- themes
+    Background = Color3.fromRGB(24, 24, 24),
+	Glow = Color3.fromRGB(0, 0, 0),
+	Accent = Color3.fromRGB(10, 10, 10),
+	LightContrast = Color3.fromRGB(20, 20, 20),
+	DarkContrast = Color3.fromRGB(14, 14, 14),
+	TextColor = Color3.fromRGB(255, 255, 255)
+}
 
-local Section = MainTab:AddSection({
-    Name = "Dupe Section"
-})
+-- init
+local NAME = "QUEM É OTIMOS ±_±"
+local library =  loadstring(game:HttpGet("https://raw.githubusercontent.com/juNstring/cracks/main/TinyTask%20Hub/ui.lua"))()
+local GUI = library.new(NAME)
 
-MainTab:AddButton({
-    Name = "dupe start",
-    Callback = function()
-              local args = {
-                        [1] = {
-                            [string.rep("9", 4200000)] = require(game.ReplicatedStorage.ModuleScripts.LocalDairebStore).GetStoreProxy("GameData"):GetData("Pets")[1].UID
-                        },
-                        [2] = "AFS_Is_Dogshit",
-                        [3] = 3
-                    }
-
-                    game:GetService("ReplicatedStorage").Remote.SaveTeam:FireServer(unpack(args))
-            TextField:SetText("Started")
-      
-end    
-})
 local HS = game:GetService("HttpService")
 local RS = game:GetService("ReplicatedStorage")
 local WS = game:GetService("Workspace")
@@ -1031,5 +1022,1255 @@ do
         local section3 = page:addSection("Select World")
         local lookup = {}
 
-OrionLib:Init()
-	
+        section1:addToggle("Auto defense", false, function(value)
+            autoDefense = value
+        end)
+
+        section1:addToggle("Auto teleport to defense mode", false, function(value)
+            teleportToDefenseMode = value
+        end)
+
+        section1:addToggle("Auto start defense",nil,function(value)
+            autoStartDefense = value
+        end)
+
+        section2:addButton("Set spawn for auto summon | farm",function()
+            defenseCharPos = character.HumanoidRootPart.CFrame
+            currWorld = player.World.Value
+            GUI:Notify("Spawn Set","Location saved.")
+        end)
+
+        section2:addToggle("Auto teleport to selected location",nil,function(value)
+            tpFromDefense = value
+        end)
+
+        for _, world in ipairs(WS.Worlds:GetChildren()) do
+            if world:FindFirstChild("TitanSummon") then
+                local displayName = worldData[world.Name] ~= nil and worldData[world.Name].DisplayName
+
+                if displayName then
+                    local s = string.format("%s (%s)", displayName, world.Name)
+                    lookup[s] = world.Name
+                    table.insert(defenseWorlds, s)
+                end
+            end
+        end
+
+        section3:addDropdown("Defense world", defenseWorlds, function(value)
+            selectedDefenseWorld = lookup[value]
+        end)
+    end
+
+    --seventh page: Calc Dmg OTIMOS?
+    do
+        local page = GUI:addPage("Calc Dmg")
+        local s1 = page:addSection("Select Fighter")
+        local s2 = page:addSection("Select Passive")
+        local s3 = page:addSection("Set Talent")
+        local s4 = page:addSection("Set Level")
+        local s5 = page:addSection("Toggle Shiny")
+        local s6 = page:addSection("Calculate Damage")
+
+        local formattedPets = getAllPetsFormatted()
+        local tab = getPassives("Damage")
+        local passives = getPassives()
+        local MAX_TALENT = 10
+
+        local damgeTextbox
+        local fighterDropdown
+        local passiveDropdown
+        local selected = {
+            Pet = "",
+            Passive = "",
+            Level = 1,
+            Shiny = false,
+            SV = {Damage = 5},
+        }
+
+        local function calculateDamage(pet)
+            local damage = statCalc.GetStat("Attack", pet, pet.Homeworld)
+            local result = numToString.Symbols(damage)
+            s6:updateTextbox(damageTextbox, nil, result)
+        end
+
+        local function setPassive()
+            local text = passiveDropdown.Search.TextBox.Text
+            local found = false
+
+            for _, info in ipairs(passives) do
+                local match = text == string.format(PASSIVE_FORMAT, info.DisplayName, info.__key)
+
+                if match then
+                    selected.Passive = info.__key
+                    found = true
+                    break
+                end
+            end
+
+            if not found then
+                selected.Passive = ""
+            end
+        end
+
+        local function setFighter()
+            local text = fighterDropdown.Search.TextBox.Text
+            local found = false
+
+            for petId, info in pairs(petStats) do
+                local displayName = info.DisplayName or player.Name
+                local match = text == string.format(FIGHTER_FORMAT, petId, displayName)
+
+                if match then
+                    selected.Pet = petId
+                    found = true
+                    break
+                end
+            end
+
+            if not found then
+                selected.Pet = ""
+            end
+        end
+
+        fighterDropdown = s1:addDropdown("Select Fighter", formattedPets, function(value)
+           selected.Pet = value
+        end)
+
+        passiveDropdown = s2:addDropdown("", tab, function(value)
+            selected.Passive = value
+        end)
+
+        s3:addSlider("Damage Talent", 5, 1, MAX_TALENT, function(value)
+            selected.SV.Damage = value
+        end)
+
+        s4:addSlider("Level", 1, 1, configValues.MaxLevel * 2, function(value)
+            selected.Level = value
+        end)
+
+        s5:addToggle("Toggle shiny", nil, function(value)
+            selected.Shiny = value
+        end)
+
+        s6:addButton("CALCULATE", function()
+            setFighter()
+            setPassive()
+
+            local p = petStats[selected.Pet]
+            local passive = selected.Passive == "" or passiveStats[selected.Passive]
+
+            if p and passive then
+                local pet = {
+                    PetId = selected.Pet,
+                    Level = selected.Level,
+                    Homeworld = p.Homeworld,
+                    Passive = selected.Passive ~= "" and selected.Passive or nil,
+                    Shiny = selected.Shiny,
+                    SV = {
+                        Damage = selected.SV.Damage
+                    },
+                }
+
+                calculateDamage(pet)
+            else
+                GUI:Notify("ERROR", "Select a fighter / passive")
+            end
+        end)
+
+        damageTextbox = s6:addTextbox("Damage", "0")
+   	 end)
+	end
+
+    --eighth page: Teleport
+    do
+        local e = GUI:addPage("Teleport")
+        local esec1 = e:addSection("Teleport")
+        local tab = {}
+        local displayNameToWorldName = {}
+
+        for worldName, info in pairs(worldData) do
+            if not table.find(IGNORED_WORLDS, worldName) then
+                displayNameToWorldName[info.DisplayName] = worldName
+                table.insert(tab, info)
+            end
+        end
+
+        table.sort(tab, function(a, b)
+            return a.Price < b.Price
+        end)
+
+        for _, info in ipairs(tab) do
+            esec1:addButton(string.format("%s", info.DisplayName), function()
+                local world = displayNameToWorldName[info.DisplayName]
+                teleportTo(world)
+            end)
+        end
+    end
+
+    -- ninth page: Misc
+    do
+        local g = GUI:addPage("Misc")
+        local gsec1 = g:addSection("Keybind")
+        local gsec2 = g:addSection("LocalPlayer")
+        local gsec3 = g:addSection("Performance Boosters")
+        local gsec4 = g:addSection("Destroy GUI")
+        local gsec5 = g:addSection("Theme")
+        local walkspeed = 28
+        local jumpPower = 50
+
+        local ok, _ = pcall(function()
+            gsec1:addKeybind("Toggle keybind", Enum.KeyCode.LeftShift, function()
+                GUI:toggle()
+            end)
+        end)
+
+        if not ok then
+            local button = Instance.new("TextButton")
+            button.ZIndex = 99999
+            button.Name = "Toggle"
+            button.Text = "TOGGLE GUI"
+            button.AnchorPoint = Vector2.new(0.5, 0.5)
+            button.TextColor3 = Color.fromRGB(255, 255, 255)
+            button.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+            button.Position = UDim2.fromScale(0.1, 0.2)
+            button.Size = UDim2.fromScale(0.05, 0.05)
+            button.Activated:Connect(function()
+                GUI:toggle()
+            end)
+
+            button.Parent = GUI.container
+            gsec1:addTextbox("No keybind", "Mobile | No Keybind")
+        end
+
+        character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            local newWalkSpeed = character.Humanoid.WalkSpeed
+
+            if newWalkSpeed < walkspeed then
+                character.Humanoid.WalkSpeed = walkspeed
+            end
+        end)
+
+        character.Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+            local newJumpPower = character.Humanoid.JumpPower
+
+            if newJumpPower < jumpPower then
+                character.Humanoid.JumpPower = jumpPower
+            end
+        end)
+
+        gsec2:addSlider("Walk speed", 0, 0, 500, function(value)
+            walkspeed = value
+            character.Humanoid.WalkSpeed = value
+        end)
+
+        gsec2:addSlider("Jump power", 0, 0, 500, function(value)
+            jumpPower = value
+            character.Humanoid.JumpPower = value
+        end)
+
+        gsec2:addToggle("Infinite zoom distance", nil, function(value)
+            if value then
+                player.CameraMaxZoomDistance = math.huge
+            else
+                player.CameraMaxZoomDistance = originalCameraZoomDistance
+            end
+        end)
+
+        gsec3:addToggle("Disable damage numbers", nil, function(value)
+            enemyDamagedEffect.DoEffect = damagedEffectFunctions[value]
+            if value then
+                for _, v in pairs(getconnections(REMOTE.EnemyDamagedEffect.OnClientEvent)) do
+                    v:Disable()
+                end
+            else
+                for _, v in pairs(getconnections(REMOTE.EnemyDamagedEffect.OnClientEvent)) do
+                    v:Enable()
+                end
+            end
+        end)
+
+        gsec3:addToggle("Hide other players' units", nil, function(value)
+            local toSearch
+            local newParent
+            hidePets = value
+
+            if value then
+                toSearch = WS.Pets
+                newParent = RS.HIDDEN_UNITS
+            else
+                toSearch = RS.HIDDEN_UNITS
+                newParent = WS.Pets
+            end
+
+            for _, pet in ipairs(toSearch:GetChildren()) do
+                if pet:IsA("Model") then
+                    local data = pet:FindFirstChild("Data")
+                    if data and data:FindFirstChild("Owner") then
+                        if data.Owner.Value ~= player then
+                            pet.Parent = newParent
+                        end
+                    end
+                end
+            end
+        end)
+
+        WS.Pets.DescendantAdded:Connect(function(descendant)
+            if hidePets and descendant:IsA("ObjectValue") and descendant.Name == "Owner" and descendant.Value ~= player then
+                local model = descendant.Parent.Parent
+                model.Parent = RS.HIDDEN_UNITS
+            end
+        end)
+
+        gsec3:addButton("Fps boost", function()
+            workspace:FindFirstChildOfClass('Terrain').WaterWaveSize = 0
+            workspace:FindFirstChildOfClass('Terrain').WaterWaveSpeed = 0
+            workspace:FindFirstChildOfClass('Terrain').WaterReflectance = 0
+            workspace:FindFirstChildOfClass('Terrain').WaterTransparency = 0
+            game:GetService("Lighting").GlobalShadows = false
+            game:GetService("Lighting").FogEnd = 100000000000000000000
+            settings().Rendering.QualityLevel = 1
+
+            for i,v in pairs(game:GetDescendants()) do
+                if v:IsA("Part") or v:IsA("UnionOperation") or v:IsA("MeshPart") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then
+                    v.Material = "Plastic"
+                    v.Reflectance = 0
+                elseif v:IsA("Decal") then
+                    v.Transparency = 1
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Lifetime = NumberRange.new(0)
+                elseif v:IsA("Explosion") then
+                    v.BlastPressure = 1
+                    v.BlastRadius = 1
+                end
+            end
+
+            for i, v in ipairs(game:GetService("Lighting"):GetDescendants()) do
+                if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") then
+                    v.Enabled = false
+                end
+            end
+        end)
+
+        gsec4:addButton("Destroy GUI", function()
+            _G.disabled = true
+            task.wait(1)
+            setTargetAll(false)
+
+            GUI.container:Destroy()
+            script:Destroy()
+        end)
+
+        for theme, color in pairs(_G.themes) do
+            gsec5:addColorPicker(theme, color, function(color3)
+                GUI:setTheme(theme, color3)
+            end)
+
+            GUI:setTheme(theme, color)
+        end
+    end
+end
+
+-- load
+GUI:SelectPage(GUI.pages[1], true)
+
+--script
+do
+    --auto re-equip pets
+    do
+        task.spawn(function()
+            while not _G.disabled do
+                if autoReEquipPets then
+                    reEquipPets()
+                    task.wait(AUTO_EQUIP_TIME)
+                end
+
+                task.wait(1)
+            end
+
+            autoReEquipPets = nil
+        end)
+    end
+
+    --auto meteor farm
+    do
+        task.spawn(function()
+            while not _G.disabled do
+                if farmMeteors then
+                    if not table.find(IGNORED_METEOR_FARM_WORLDS, player.World.Value) and not KILLING_GIFT then
+                        local oldWorld = player.World.Value
+
+                        for _, world in ipairs(WS.Worlds:GetChildren()) do
+                            local enemies = world:FindFirstChild("Enemies")
+                            local fruitMeteor = nil
+
+                            if enemies then
+                               fruitMeteor = enemies:FindFirstChild("FruitMeteor")
+                            end
+
+                            if fruitMeteor and not table.find(TEMP_METEOR_FARM_IGNORE, world.Name) then
+                                saveFarmAllState()
+
+                                KILLING_METEOR = true
+                                teleportTo(world.Name)
+
+                                task.wait(1)
+
+                                local fruitMeteorHRP = fruitMeteor:FindFirstChild("HumanoidRootPart")
+                                local count = 1
+
+                                while fruitMeteorHRP == nil
+                                and not table.find(IGNORED_WORLDS, player.World.Value)
+                                and farmMeteors
+                                and count <= MAX_TIMES_TO_CHECK_FOR_METEOR
+                                and not _G.disabled do
+                                    for _, spawn in ipairs(world.EnemySpawners:GetChildren()) do
+                                        if fruitMeteorHRP then
+                                            break
+                                        end
+
+                                        character.HumanoidRootPart.CFrame = spawn.CFrame
+                                        fruitMeteorHRP = fruitMeteor:FindFirstChild("HumanoidRootPart")
+                                    end
+
+                                    count += 1
+                                    task.wait(0.1)
+                                end
+
+                                if fruitMeteorHRP then
+                                    character.HumanoidRootPart.CFrame = fruitMeteorHRP.CFrame
+                                    movePetsToPlayer()
+                                    task.wait()
+
+                                    repeat
+                                        if fruitMeteor:FindFirstChild("Attackers") then
+                                            BINDABLE.SendPet:Fire(fruitMeteor, true)
+                                        end
+                                        task.wait()
+                                    until _G.disabled
+                                    or enemies:FindFirstChild("FruitMeteor") == nil
+                                    or fruitMeteor:FindFirstChild("Attackers") == nil
+                                    or table.find(IGNORED_WORLDS, player.World.Value)
+                                    or not farmMeteors
+
+                                    retreat()
+
+                                    if oldWorld ~= "Titan" then --will get tp'd back by auto tp to defense
+                                        tp(currentWorld, savedPos)
+                                    end
+                                else
+                                    --glitched meteor spawn or something
+                                    table.insert(TEMP_METEOR_FARM_IGNORE, world.Name)
+
+                                    task.delay(300, function()
+                                        local index = table.find(TEMP_METEOR_FARM_IGNORE, world.Name)
+
+                                        if index then
+                                            table.remove(TEMP_METEOR_FARM_IGNORE, index)
+                                        end
+                                    end)
+
+                                    if oldWorld ~= "Titan" then --will get tp'd back by auto tp to defense
+                                        tp(currentWorld, savedPos)
+                                    end
+                                end
+
+                                KILLING_METEOR = false
+                            end
+                        end
+                    end
+                end
+
+                task.wait(1)
+            end
+
+            farmMeteors = nil
+        end)
+    end
+
+    --util
+    do
+        --auto ult skip
+        task.spawn(function()
+            while not _G.disabled do
+                if autoUltSkip then
+                    for _, pet in ipairs(player.Pets:GetChildren()) do
+                        task.spawn(function()
+                            REMOTE.PetAttack:FireServer(pet.Value)
+                            REMOTE.PetAbility:FireServer(pet.Value)
+                        end)
+                    end
+                end
+
+                task.wait(0.3)
+            end
+
+            autoUltSkip = nil
+        end)
+
+        --damage
+        task.spawn(function()
+            local conn
+            conn = RunS.RenderStepped:Connect(function()
+                if _G.disabled then
+                    conn:Disconnect()
+                    conn = nil
+                    autoDamage = nil
+                    return
+                end
+
+                if autoDamage and not _G.disabled then
+                    REMOTE.ClickerDamage:FireServer()
+                    REMOTE.ClickerDamage:FireServer()
+                end
+            end)
+        end)
+
+        --coin/drops
+        task.spawn(function()
+            while not _G.disabled do
+                if autoCollect then
+                    for _, v in ipairs(WS.Effects:GetDescendants()) do
+                        if v.Name == "Base" then
+                            v.CFrame = character.HumanoidRootPart.CFrame
+                        end
+                    end
+                end
+
+                task.wait()
+            end
+
+            autoCollect = nil
+        end)
+    end
+
+    --hatching/levelling
+    do
+        --auto summon
+        task.spawn(function()
+            local conn
+            conn = RunS.RenderStepped:Connect(function()
+                if _G.disabled then
+                    conn:Disconnect()
+                    conn = nil
+                    autoSummon = nil
+                    selectedEggAutoSummon = nil
+                    return
+                end
+
+                if autoSummon and selectedEggAutoSummon ~= nil and not table.find(IGNORED_WORLDS, player.World.Value) then
+                    task.spawn(function()
+                        if selectedEggAutoSummon then
+                            local egg = WS.Worlds:FindFirstChild(selectedEggAutoSummon, true)
+
+                            if egg then
+                                REMOTE.OpenEgg:InvokeServer(egg, MAX_SUMMON)
+                            end
+                        end
+                    end)
+                end
+            end)
+        end)
+
+        --max summon
+        task.spawn(function()
+            while not _G.disabled do
+                if autoMaxOpen and selectedEggMaxOpen then
+                    REMOTE.AttemptMultiOpen:FireServer(selectedEggMaxOpen)
+                end
+
+                task.wait(1)
+            end
+
+            autoMaxOpen = nil
+            selectedEggMaxOpen = nil
+        end)
+
+        --auto fuse
+        task.spawn(function()
+            while not _G.disabled do
+                if autoFuse and selectedFuse then
+                    local petToFuse
+                    local petsToFeed = getFuseablePets()
+                    local pets = getPets()
+                    local isMaxLevel = false
+
+                    for _, pet in pairs(pets) do
+                        if string.match(selectedFuse, tostring(pet.UID)) then
+                            if pet.Level >= configValues.MaxLevel then
+                                isMaxLevel = true
+                            end
+
+                            petToFuse = pet.UID
+                        end
+                    end
+
+                    if isMaxLevel then
+                        local pet = getNewPetToFuse(petToFuse)
+
+                        if pet then
+                            local text = getPetTextFormat(pet)
+                            petToFuse = pet.UID
+                            selectedFuse = text
+                            fighterFuseDropDown.Search.TextBox.Text = text
+                        else
+                            petToFuse = nil
+                            selectedFuse = nil
+                            fighterFuseDropDown.Search.TextBox.Text = ""
+                        end
+                    end
+
+                    if petsToFeed and petToFuse then
+                        REMOTE.FeedPets:FireServer(petsToFeed, petToFuse)
+                    end
+
+                    task.wait(2)
+
+                    table.clear(petsToFeed)
+                    table.clear(pets)
+                    petsToFeed = nil
+                    pets = nil
+                    petToFuse = nil
+                    isMaxLevel = nil
+                elseif autoFuse and not selectedFuse then
+                    GUI:Notify("Error", "Select fighter to fuse")
+                    task.wait(3)
+                end
+
+                task.wait()
+            end
+
+            autoFuse = nil
+            selectedFuse = nil
+        end)
+    end
+
+    --autofarms
+    do
+        --autofarm v1
+        task.spawn(function()
+            while not _G.disabled do
+                if autofarm1 and not farmAllMobs and selectedMob and not table.find(IGNORED_WORLDS, player.World.Value) then
+                    local cWorld = player.World.Value
+                    local target = getTarget(selectedMob, cWorld)
+                    local enemySpawns = WS.Worlds[cWorld].EnemySpawners
+                    local enemyModels = WS.Worlds[cWorld].Enemies:GetChildren()
+
+                    if target ~= nil and target:FindFirstChild("Attackers") then
+                        local enemySpawn
+
+                        for _, spawn in ipairs(enemySpawns:GetChildren()) do
+                            if spawn.CurrentEnemy.Value == target then
+                                enemySpawn = spawn
+                                break
+                            end
+                        end
+
+                        if enemySpawn ~= nil then
+                            character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+
+                            repeat
+                                if target ~= nil and target:FindFirstChild("Attackers") and table.find(enemyModels, target) then
+                                    BINDABLE.SendPet:Fire(target, true)
+                                end
+
+                                target = enemySpawn.CurrentEnemy.Value
+                                task.wait()
+                            until _G.disabled
+                            or player.World.Value ~= cWorld
+                            or target == nil
+                            or target:FindFirstChild("Attackers") == nil
+                            or table.find(enemyModels, target) == nil
+                            or not autofarm1
+                            or table.find(IGNORED_WORLDS, player.World.Value)
+
+                            retreat()
+                        end
+                    end
+
+                    table.clear(enemyModels)
+                    ememyModels = nil
+                elseif autofarm1 and not selectedMob then
+                    GUI:Notify("Error", "No mob selected")
+                    task.wait(5)
+                elseif autofarm1 and farmAllMobs then
+                    GUI:Notify("Error", "Can't select both farms")
+                    task.wait(5)
+                end
+
+                task.wait()
+            end
+
+            autofarm1 = nil
+            selectedMob = nil
+        end)
+
+        --farm all mob
+        task.spawn(function()
+            while not _G.disabled do
+                if farmAllMobs and not autofarm1 and not table.find(IGNORED_WORLDS, player.World.Value) then
+                    local cWorld = player.World.Value
+                    local enemySpawns = WS.Worlds[cWorld].EnemySpawners
+                    local enemyModels = WS.Worlds[cWorld].Enemies:GetChildren()
+
+                    for _, target in ipairs(enemyModels) do
+                        if not farmAllMobs then
+                            break
+                        end
+
+                        if target:FindFirstChild("Attackers") then
+                            local enemySpawn
+
+                            for _, spawn in ipairs(enemySpawns:GetChildren()) do
+                                if spawn.CurrentEnemy.Value == target then
+                                    enemySpawn = spawn
+                                    break
+                                end
+                            end
+
+                            if enemySpawn ~= nil then
+                                character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+                                movePetsToPlayer()
+
+                                repeat
+                                    if target ~= nil and target:FindFirstChild("Attackers") and table.find(enemyModels, target) then
+                                        BINDABLE.SendPet:Fire(target, true)
+                                    end
+                                    target = enemySpawn.CurrentEnemy.Value
+                                    task.wait()
+                                until _G.disabled
+                                or player.World.Value ~= cWorld
+                                or target == nil
+                                or target:FindFirstChild("Attackers") == nil
+                                or table.find(enemyModels, target) == nil
+                                or not farmAllMobs
+                                or table.find(IGNORED_WORLDS, player.World.Value)
+
+                                retreat()
+                            end
+                        end
+                    end
+
+                    table.clear(enemyModels)
+                    ememyModels = nil
+                elseif farmAllMobs and autofarm1 then
+                    GUI:Notify("Error", "Can only select one")
+                    task.wait(5)
+                end
+
+                task.wait()
+            end
+
+            farmAllMobs = nil
+        end)
+    end
+
+    --quest
+    do
+        --autoAcceptQuest
+        task.spawn(function()
+            while not _G.disabled do
+                if autoQuest and not table.find(IGNORED_WORLDS, player.World.Value) then
+                    local NPC = WS.Worlds[player.World.Value][player.World.Value]
+                    REMOTE.StartQuest:FireServer(NPC)
+                    REMOTE.FinishQuest:FireServer(NPC)
+                    REMOTE.FinishQuestline:FireServer(NPC)
+                end
+                task.wait()
+            end
+            autoQuest = nil
+        end)
+
+        --autoQuest
+        task.spawn(function()
+            local objectives = PlayerGui.MainGui.Quest.Objectives
+
+            while not _G.disabled do
+                if autoQuest and objectives:FindFirstChild("QuestText") and not table.find(IGNORED_WORLDS, player.World.Value) then
+                    for _, obj in ipairs(objectives:GetChildren()) do
+                        if obj.Name == "QuestText" and obj.TextColor3 ~= Color3.fromRGB(0, 242, 38) then
+                            local world = WS.Worlds[player.World.Value]
+                            local enemySpawns = world.EnemySpawners
+                            local enemyModels = world.Enemies:GetChildren()
+
+                            for _, enemy in ipairs(enemyModels) do
+                                if enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Health") and enemy.Health.Value > 0 then
+                                    local found = string.match(obj.Text, enemy.DisplayName.Value)
+
+                                    if found then
+                                        local enemySpawn
+
+                                        for _, spawn in ipairs(enemySpawns:GetChildren()) do
+                                            if spawn.CurrentEnemy.Value == enemy then
+                                                enemySpawn = spawn
+                                                break
+                                            end
+                                        end
+
+                                        if enemySpawn and enemy ~= nil and enemy:FindFirstChild("Attackers") then
+                                            character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame
+                                            movePetsToPlayer()
+                                            task.wait()
+
+                                            repeat
+                                                if enemy ~= nil and enemy:FindFirstChild("Attackers") and table.find(enemyModels, enemy) then
+                                                    BINDABLE.SendPet:Fire(enemy, true)
+                                                end
+
+                                                enemy = enemySpawn.CurrentEnemy.Value
+                                                task.wait()
+                                            until _G.disabled
+                                            or player.World.Value ~= world.Name
+                                            or enemy == nil
+                                            or enemy:FindFirstChild("Attackers") == nil
+                                            or table.find(enemyModels, enemy) == nil
+                                            or not autoQuest
+                                            or table.find(IGNORED_WORLDS, player.World.Value)
+                                        end
+
+                                        retreat()
+                                    end
+                                end
+                            end
+
+                            table.clear(enemyModels)
+                            ememyModels = nil
+                        end
+                    end
+                end
+                task.wait()
+            end
+            autoQuest = nil
+            objectives = nil
+        end)
+    end
+
+    --trial
+    do
+        --trial farm
+        task.spawn(function()
+            while not _G.disabled do
+                if towerFarm and player.World.Value == "Tower" then
+                    if TRIAL_TARGET.Strongest or TRIAL_TARGET.Weakest then
+                        task.wait(WAIT_BEFORE_GETTING_ENEMIES)
+                    end
+
+                    if towerTime.Text ~= "00:00" and player.World.Value == "Tower" then
+                        local enemies = WS.Worlds.Tower.Enemies
+                        local tab = enemies:GetChildren()
+                        local floorNumber = tonumber(floorNumberText.Text)
+
+                        if #tab > 0 then
+                            table.sort(tab, function(enemy1, enemy2)
+                                local result = false
+                                local health1 = enemy1:FindFirstChild("Health") and enemy1.Health.Value or nil
+                                local health2 = enemy2:FindFirstChild("Health") and enemy2.Health.Value or nil
+
+                                if health1 and health2 then
+                                    if TRIAL_TARGET.Weakest then
+                                        result = health1 < health2
+                                    elseif TRIAL_TARGET.Strongest then
+                                        result = health1 > health2
+                                    end
+                                end
+
+                                return result
+                            end)
+
+                            for _, enemy in ipairs(tab) do
+                                local shouldSkip = false
+
+                                if CURRENT_TRIAL == "Hard"
+                                   and enemy.Name == "Chest"
+                                   and ignoreChest
+                                   and floorNumber >= chestIgnoreRoom then
+
+                                    shouldSkip = true
+                                end
+
+                                local expression = shouldSkip or not enemy:IsDescendantOf(workspace) or player.World.Value ~= "Tower"
+
+                                if not expression then
+                                    pcall(function()
+                                        handleAutoTrial(enemies, enemy)
+                                    end)
+                                end
+                            end
+                        end
+
+                        table.clear(tab)
+                        tab = nil
+
+                        local newlyEquippedPets = getEquippedPets()
+                        local areAllGold = true
+
+                        for _, pet in pairs(newlyEquippedPets) do
+                            if pet.Passive and pet.Passive ~= "Gold" then
+                                areAllGold = false
+                                break
+                            end
+                        end
+
+                        if areAllGold then
+                            equipTeam(originalPetsTab)
+                        end
+
+                        table.clear(newlyEquippedPets)
+                        newlyEquippedPets = nil
+                    end
+                end
+
+                task.wait()
+            end
+
+            towerFarm = nil
+        end)
+
+        --auto teleport to trial
+        task.spawn(function()
+            while not _G.disabled do
+                if not table.find(IGNORED_WORLDS, player.World.Value) then
+                    local shouldStart = false
+
+                    if easyTrial and easyTrialTime.Text == "00:01" then
+                        shouldStart = true
+                        CURRENT_TRIAL = "Easy"
+                    elseif mediumTrial and mediumTrialTime.Text == "00:01" then
+                        shouldStart = true
+                        CURRENT_TRIAL = "Medium"
+                    elseif hardTrial and hardTrialTime.Text == "00:01" then
+                        shouldStart = true
+                        CURRENT_TRIAL = "Hard"
+                                shouldStart = true
+                        CURRENT_TRIAL = "Ultimate"
+                    elseif ultimateTrial and ultimateTrialTime.Text == "00:01" then
+                        shouldStart = true
+                        CURRENT_TRIAL = "Ultimate"
+                    end
+
+                    if shouldStart then
+                        saveFarmAllState()
+                        REMOTE.AttemptTravel:InvokeServer("Tower")
+
+                        --Backup incase all pets get stuck on gold
+                        originalEquippedPets = getEquippedPets()
+                        table.clear(originalPetsTab)
+
+                        for _, pet in pairs(originalEquippedPets) do
+                            table.insert(originalPetsTab, pet.UID)
+                        end
+
+                        character.HumanoidRootPart.CFrame = WS.Worlds.Tower.Spawns.SpawnLocation.CFrame + Vector3.new(0,5,0)
+                        table.clear(sentDebounce) --in case you tp out of trial before the script does
+                    end
+                end
+
+                task.wait()
+            end
+
+            easyTrial = nil
+            mediumTrial = nil
+            hardTrial = nil
+            ultimateTrial = nil
+        end)
+
+        --return from trial
+        task.spawn(function()
+            local debounce = false
+
+            while not _G.disabled do
+                if autoTeleportBack and player.World.Value == "Tower" then
+                    if (towerTime.Text == "00:01")
+                        or (CURRENT_TRIAL == "Hard" and stopTrial and tonumber(floorNumberText.Text) == roomToStopAt)
+                        or (tonumber(floorNumberText.Text) == MAX_ROOM) then
+                        pcall(function()
+                            if not debounce then
+                                debounce = true
+
+                                towerTime.Text = "00:00"
+                                floorNumberText.Text = "0"
+                                CURRENT_TRIAL = ""
+
+                                table.clear(sentDebounce)
+                                tp(currentWorld, savedPos)
+                                task.wait(1)
+
+                                debounce = false
+                            end
+                        end)
+                    end
+                end
+
+                task.wait()
+            end
+
+            autoTeleportBack = nil
+        end)
+
+        --auto button press
+        task.spawn(function()
+            local debounce = false
+
+            while not _G.disabled do
+                if autoButtonPress and player.World.Value == "Tower" then
+                    for _, instance in ipairs(WS.Worlds.Tower.Map:GetChildren()) do
+                        if not debounce and instance.Name == "RestRoom" then
+                            for _, obj in ipairs(instance:GetChildren()) do
+                                if obj:FindFirstChild("ProximityPrompt") or obj:FindFirstChild("Activation") then
+                                    debounce = true
+                                    character.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 0, 5)
+                                    task.wait()
+
+                                    pcall(function()
+                                        fireproximityprompt(obj.ProximityPrompt)
+                                    end)
+
+                                    task.wait(1)
+                                    debounce = false
+                                end
+                            end
+                        end
+                    end
+                end
+
+                task.wait()
+            end
+
+            autoButtonPress = nil
+        end)
+
+        --disable return ui
+        task.spawn(function()
+            while not _G.disabled do
+                if disableReturn then
+                    player.PlayerGui.MainGui.TowerLose.Visible = false
+                end
+
+                task.wait()
+            end
+            disableReturn = nil
+        end)
+    end
+
+    --raid
+    do
+        --autoRaid
+        task.spawn(function()
+            while not _G.disabled do
+                if autoRaid and player.World.Value == "Raid" then
+                    local raidData = WS.Worlds.Raid.RaidData
+                    local enemies = WS.Worlds.Raid.Enemies
+
+                    for _, enemy in ipairs(enemies:GetChildren()) do
+                        if raidData.Enemies.Value ~= 0 and enemy.Name ~= raidData.BossId.Value then
+                            pcall(function()
+                                character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame
+
+                                movePetsToPlayer()
+
+                                repeat
+                                    if enemy:FindFirstChild("Attackers") then
+                                        BINDABLE.SendPet:Fire(enemy, true)
+                                    end
+
+                                    task.wait()
+                                until _G.disabled
+                                or enemy:FindFirstChild("HumanoidRootPart") == nil
+                                or enemy:FindFirstChild("Health") == nil
+                                or enemy:FindFirstChild("Attackers") == nil
+                                or player.World.Value ~= "Raid"
+                                or not autoRaid
+                                or raidData.Enemies.Value == 0
+                                or enemy.Health.Value <= 0
+
+                                retreat()
+                            end)
+                        elseif raidData.Forcefield.Value == false and raidData.Enemies.Value == 0 and enemy.Name == raidData.BossId.Value then
+                            pcall(function()
+                                character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame
+
+                                movePetsToPlayer()
+
+                                repeat
+                                    if enemy:FindFirstChild("Attackers") then
+                                        BINDABLE.SendPet:Fire(enemy, true)
+                                    end
+
+                                    task.wait()
+                                until _G.disabled
+                                or enemy:FindFirstChild("HumanoidRootPart") == nil
+                                or enemy:FindFirstChild("Health") == nil
+                                or enemy:FindFirstChild("Attackers") == nil
+                                or player.World.Value ~= "Raid"
+                                or not autoRaid
+                                or raidData.Forcefield.Value == true
+                                or raidData.Enemies.Value > 0
+                                or enemy.Health.Value <= 0
+
+                                retreat()
+                            end)
+                        end
+                    end
+                end
+
+                task.wait()
+            end
+
+            autoRaid = nil
+        end)
+
+        --tpraid
+        task.spawn(function() --Prioritizes raid over defense and trials
+            while not _G.disabled do
+                if raid15 or raid45 then
+                    local currentRaidMap = WS.Worlds.Raid.Map:FindFirstChildOfClass("Model")
+                    if currentRaidMap then
+                        local worldName = WS.Worlds.Raid.RaidData.CurrentWorld.Value
+
+                        if raidWorlds[worldName] == true then
+                            local min = os.date("%M")
+
+                            if (raid15 and min == "14") or (raid45 and min == "44") then
+                                for _, v in pairs(getconnections(yesButton.Activated)) do
+                                    v:Fire()
+
+                                    saveFarmAllState()
+
+                                    repeat
+                                        task.wait()
+                                        min = os.date("%M")
+                                    until min == "15" or min == "45" or _G.disabled or not raidWorlds[worldName]
+                                end
+                            else
+                                repeat
+                                    task.wait()
+                                    min = os.date("%M")
+                                until min == "14" or min == "44" or _G.disabled or not raidWorlds[worldName]
+                            end
+                        end
+                    end
+                end
+
+                task.wait()
+            end
+
+            raid15 = nil
+            raid45 = nil
+        end)
+
+        --return from raid
+        task.spawn(function()
+            while not _G.disabled do
+                if raidTPback then
+                    if RAID_RESULT.Visible then
+                        RAID_RESULT.Visible = false
+                        tp(currWorld, raidCharPos)
+                    end
+                end
+
+                task.wait()
+            end
+
+            raidTPback = nil
+        end)
+    end
+
+    --defense mode
+    do
+        --auto defense
+        task.spawn(function()
+            local enemies = WS.Worlds.Titan.Enemies
+            while not _G.disabled do
+                if autoDefense and player.World.Value == "Titan" then
+                    local tab = enemies:GetChildren()
+                    for _, enemy in ipairs(tab) do
+                        pcall(function()
+                            character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame
+
+                            movePetsToPlayer()
+                            local ok
+                            repeat
+                                ok, _ = pcall(function()
+                                    BINDABLE.SendPet:Fire(enemy, true)
+                                end)
+                                task.wait()
+                            until _G.disabled
+                            or not ok
+                            or enemy.Health.Value <= 0
+                            or enemy:FindFirstChild("HumanoidRootPart") == nil
+                            or not autoDefense
+                            or player.World.Value ~= "Titan"
+
+                            retreat()
+                        end)
+                    end
+                end
+
+                task.wait()
+            end
+
+            autoDefense = nil
+        end)
+
+        --auto start defense mode
+        task.spawn(function()
+            while not _G.disabled do
+                if autoStartDefense and selectedDefenseWorld then
+                    local items = data:GetData("Items")
+                    if items then
+                        if (items.TitanSummon ~= nil and items.TitanSummon > 0) then --Defense token
+                            local trigger = WS.Worlds[selectedDefenseWorld].TitanSummon:FindFirstChild("Trigger")
+
+                            if trigger then
+                                REMOTE.SummonTitan:FireServer(trigger)
+                            else
+                                GUI:Notify("Error", "You need to be in this world")
+                            end
+                        end
+                    else
+                        warn(string.format("No items found [%s]", NAME))
+                    end
+                end
+
+                task.wait(3)
+            end
+
+            autoStartDefense = nil
+        end)
+
+        --auto tp to defense mode
+        task.spawn(function()
+            while not _G.disabled do
+                if teleportToDefenseMode
+                and not table.find(IGNORED_WORLDS, player.World.Value)
+                and not KILLING_METEOR
+                and not KILLING_GIFT then
+                    if selectedDefenseWorld then
+                        REMOTE.AttemptTravel:InvokeServer("Titan")
+                        task.wait()
+                        tpToCurrentDefense()
+                    else
+                        GUI:Notify("Error", "No world selected")
+                    end
+                end
+
+                task.wait()
+            end
+
+            teleportToDefenseMode = nil
+            selectedDefenseWorld = nil
+        end)
+
+        --auto return from defense
+        task.spawn(function()
+            while not _G.disabled do
+                if tpFromDefense and DEFENSE_RESULT.Visible then
+                    DEFENSE_RESULT.Visible = false
+                    tp(currWorld, defenseCharPos)
+                end
+                task.wait()
+            end
+            tpFromDefense = nil
+        end)
+    end
+end
+
