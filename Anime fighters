@@ -11,21 +11,6 @@ OrionLib:MakeNotification({
 local ANIME_FIGHTERS_PLACE_ID = 6299805723
 if game.PlaceId ~= ANIME_FIGHTERS_PLACE_ID then return end
 
-_G.disabled = false
-_G.themes = _G.themes or { -- themes
-    Background = Color3.fromRGB(24, 24, 24),
-	Glow = Color3.fromRGB(0, 0, 0),
-	Accent = Color3.fromRGB(10, 10, 10),
-	LightContrast = Color3.fromRGB(20, 20, 20),
-	DarkContrast = Color3.fromRGB(14, 14, 14),
-	TextColor = Color3.fromRGB(255, 255, 255)
-}
-
--- init
-local NAME = "QUEM É OTIMOS ±_±"
-local library =  loadstring(game:HttpGet("https://raw.githubusercontent.com/juNstring/cracks/main/TinyTask%20Hub/ui.lua"))()
-local GUI = library.new(NAME)
-
 local HS = game:GetService("HttpService")
 local RS = game:GetService("ReplicatedStorage")
 local WS = game:GetService("Workspace")
@@ -2274,3 +2259,4 @@ do
     end
 end
 
+OrionLib:Init()
